@@ -16,7 +16,7 @@ class TextLoader(object):
         self.batch_size = batch_size
         self.seq_length = seq_length
         self.encoding = encoding
-        import pdb; pdb.set_trace()
+        
         if data is not None:
             self.data = data
         elif self.data_file and os.path.exists(self.data_file):
@@ -52,7 +52,6 @@ class TextLoader(object):
                 with open(self.vocab_file, 'wb') as f:
                     pickle.dump(self.vocab, f)
             self.vocab_size = len(self.vocab) + 1
-            # self.vocab_size = len(self.chars) + 1
 
             self.tensor = self.preprocess_tensor(self.data)
 
@@ -79,7 +78,7 @@ class TextLoader(object):
             exit(1)
         with open(vocab_corpus_file, 'r') as f:
             corpus = f.readlines()
-            corpus = ''.join([i.strip() for i in corpus])
+            corpus = ' '.join([i.strip() for i in corpus])
             # corpus = corpus.decode('utf8')
         return self.preprocess_vocab(corpus)
     
@@ -89,41 +88,13 @@ class TextLoader(object):
         return np.c_[tensor_x, tensor_y].astype(int)
 
     def transform(self, text):
-        new_d = list(map(self.vocab.get, text[:self.seq_length]))
-        new_d = [i if i else 0 for i in new_d]
-
-        if len(new_d) >= self.seq_length:
-            new_d = new_d[:self.seq_length]
+        vector_ids = list(map(self.vocab.get, text[:self.seq_length]))
+        vector_ids = [i if i else 0 for i in vector_ids]
+        if len(vector_ids) >= self.seq_length:
+            vector_ids = vector_ids[:self.seq_length]
         else:
-            new_d = new_d + [0] * (self.seq_length - len(new_d))
-        return new_d
-
-
-    # def preprocess(self, vocab_corpus_file, data):
-    #     if not os.path.exists(vocab_corpus_file):
-    #         print('not corpus file')
-    #         exit(1)
-    #     with open(vocab_corpus_file, 'r') as f:
-    #         corpus = f.readlines()
-    #         corpus = ''.join([i.strip() for i in corpus])
-
-    #     counter = collections.Counter(corpus)
-    #     count_pairs = sorted(list(counter.items()), key=lambda i: -i[1])
-    #     self.chars, _ = list(zip(*count_pairs))
-
-    #     self.vocab_size = len(self.chars) + 1
-    #     self.vocab = dict(list(zip(self.chars, list(range(1, len(self.chars)+1)))))
-
-    #     tensor_x = np.array(list(map(self.transform, data['text'])))
-    #     tensor_y = np.array(list(map(self.labels.get, data['label'])))
-    #     self.tensor = np.c_[tensor_x, tensor_y].astype(int)
-
-
-    # def load_preprocessed(self, data):
-    #     tensor_x = np.array(list(map(self.transform, data['text'])))
-    #     tensor_y = np.array(list(map(self.labels.get, data['label'])))
-    #     self.tensor = np.c_[tensor_x, tensor_y].astype(int)
-
+            vector_ids = vector_ids + [0] * (self.seq_length - len(vector_ids))
+        return vector_ids
 
     def create_batches(self):
         self.num_batches = int(self.tensor.shape[0] / self.batch_size)
