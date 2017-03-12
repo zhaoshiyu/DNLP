@@ -24,8 +24,8 @@ class RNNModel():
             cell = rnn.DropoutWrapper(cell, output_keep_prob=self.args.keep_prob)
         self.cell = cell
 
-        self.input_data = tf.placeholder(tf.int32, [None, self.args.seq_length], name='input_data')
-        self.targets = tf.placeholder(tf.int32, [None, ], name='targets')  # target is class label
+        self.input_data = tf.placeholder(tf.int64, [None, self.args.seq_length], name='input_data')
+        self.targets = tf.placeholder(tf.int64, [None, ], name='targets')  # target is class label
         self.initial_state = cell.zero_state(self.args.batch_size, tf.float32)
 
         with tf.variable_scope('embeddingLayer'):
@@ -57,7 +57,7 @@ class RNNModel():
             self.accuracy = tf.reduce_mean(tf.cast(self.correct_pred, tf.float32), name='accuracy')
 
 
-    def __predict(self, sess, x):
+    def _predict(self, sess, x):
         state = sess.run(self.cell.zero_state(len(x), tf.float32))
         feed = {self.input_data: x, self.initial_state: state}
         probs, state = sess.run([self.probs, self.final_state], feed_dict=feed)
@@ -68,10 +68,10 @@ class RNNModel():
         x = np.array(text)
         x_len = len(x)
         if x_len == self.args.batch_size:
-            return list(map(id2labels.get, self.__predict(sess, x)))
+            return list(map(id2labels.get, self._predict(sess, x)))
         if x_len < self.args.batch_size:
-            x =np.concatenate((x, np.array([x[-1]] * (self.args.batch_size - x_len))))
-            return list(map(id2labels.get, self.__predict(sess, x)[:len(text)]))
+            x = np.concatenate((x, np.array([x[-1]] * (self.args.batch_size - x_len))))
+            return list(map(id2labels.get, self._predict(sess, x)[:len(text)]))
         else:
             n_chunks = x_len / self.args.batch_size
             if x_len % self.args.batch_size:
@@ -86,9 +86,9 @@ class RNNModel():
         x = np.array(text)
         if len(x) != self.args.batch_size:
             x =np.concatenate((x, np.array([x[-1]] * (self.args.batch_size - len(x)))))
-            return self.__predict(sess, x)[:len(text)]
+            return self._predict(sess, x)[:len(text)]
         else:
-            return self.__predict(sess, x)
+            return self._predict(sess, x)
 
 
 class BIDIRNNModel():
@@ -115,8 +115,8 @@ class BIDIRNNModel():
         self.fw_cell = fw_cell
         self.bw_cell = bw_cell
 
-        self.input_data = tf.placeholder(tf.int32, [None, self.args.seq_length])
-        self.targets = tf.placeholder(tf.int32, [None, ])  # target is class label
+        self.input_data = tf.placeholder(tf.int64, [None, self.args.seq_length])
+        self.targets = tf.placeholder(tf.int64, [None, ])  # target is class label
         self.initial_state_fw = fw_cell.zero_state(self.args.batch_size, tf.float32)
         self.initial_state_bw = bw_cell.zero_state(self.args.batch_size, tf.float32)
         
@@ -155,7 +155,7 @@ class BIDIRNNModel():
             self.accuracy = tf.reduce_mean(tf.cast(self.correct_pred, tf.float32), name="accuracy")
 
 
-    def __predict(self, sess, x):
+    def _predict(self, sess, x):
         state_fw = sess.run(self.fw_cell.zero_state(len(x), tf.float32))
         state_bw = sess.run(self.bw_cell.zero_state(len(x), tf.float32))
         feed = {self.input_data: x, self.initial_state_fw: state_fw, self.initial_state_bw: state_bw}
@@ -167,10 +167,10 @@ class BIDIRNNModel():
         x = np.array(text)
         x_len = len(x)
         if x_len == self.args.batch_size:
-            return list(map(id2labels.get, self.__predict(sess, x)))
+            return list(map(id2labels.get, self._predict(sess, x)))
         if x_len < self.args.batch_size:
             x = np.concatenate((x, np.array([x[-1]] * (self.args.batch_size - x_len))))
-            return list(map(id2labels.get, self.__predict(sess, x)[:len(text)]))
+            return list(map(id2labels.get, self._predict(sess, x)[:len(text)]))
         else:
             n_chunks = x_len / self.args.batch_size
             if x_len % self.args.batch_size:
@@ -185,6 +185,6 @@ class BIDIRNNModel():
         x = np.array(text)
         if len(x) != self.args.batch_size:
             x = np.concatenate((x, np.array([x[-1]] * (self.args.batch_size - len(x)))))
-            return self.__predict(sess, x)[:len(text)]
+            return self._predict(sess, x)[:len(text)]
         else:
-            return self.__predict(sess, x)
+            return self._predict(sess, x)

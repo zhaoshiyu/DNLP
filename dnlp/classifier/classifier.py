@@ -21,9 +21,7 @@ class Classifier(object):
         self.model_path = model_path
         self.config_file = os.path.join(self.model_path, 'config.pkl')
         self.args = args
-        self.vocab = None
-        self.labels = None
-        self.id2labels = None
+        self.transfer = None
         self.model = None
         self.sess = tf.Session()
         if os.path.exists(self.config_file):
@@ -31,14 +29,13 @@ class Classifier(object):
 
     def _load_config(self):
         with open(self.config_file, 'rb') as f:
-            saved_config, _, _ = pickle.load(f)
-        self.labels = saved_config.labels
-        self.vocab = saved_config.vocab
-        del saved_config.labels
-        del saved_config.vocab
-        self.args = saved_config
-        self.id2labels = dict(list(zip(list(self.labels.values()), list(self.labels.keys()))))
-        
+            saved_args = pickle.load(f)
+        assert saved_args, 'load config error'
+        self.args = saved_args
+        with open(os.path.join(self.model_path, 'test.pkl'), 'rb') as f:
+            saved_args, vocab, labels = pickle.load(f)
+        import pdb; pdb.set_trace()
+        print(labels)
 
     def _load_model(self, batch_size=None):
         print('loading model ... ')
@@ -86,15 +83,16 @@ class Classifier(object):
             self.sess.close()
         self.sess = None
 
-    def train(self, data_file=None, data=None, vocab_corpus_file=None, args=None, continued=True):
-        if args is not None:
-            args.model_path = self.args.model_path
-            self.args = args
-        data_loader = TextLoader(model_dir=self.args.model_path, data_file=data_file, data=data, vocab_corpus_file=vocab_corpus_file, batch_size=self.args.batch_size, seq_length=self.args.seq_length)
-        self.args.vocab = data_loader.vocab
-        self.args.labels = data_loader.labels
-        self.args.vocab_size = data_loader.vocab_size
-        self.args.label_size = data_loader.label_size
+    def train(self, data_file=None, data=None, vocab_corpus_file=None, args=None, continued=False):
+        data_loader = TextLoader(model_dir=self.args.model_path, data_file=data_file, vocab_corpus_file=vocab_corpus_file, batch_size=self.args.batch_size, seq_length=self.args.seq_length)
+        self.transfer = data_loader.transfer
+        self.args.vocab_size = data_loader.transfer.vocab_size
+        self.args.label_size = data_loader.transfer.label_size
+
+        with open(self.config_file, 'wb') as f:
+            pickle.dump(self.args, f)
+        with open(os.path.join(self.model_path, 'test.pkl'), 'wb') as f:
+            pickle.dump([self.args, self.transfer.vocab, self.transfer.labels], f)
 
         self._init_model()
         init = tf.global_variables_initializer()
@@ -117,9 +115,6 @@ class Classifier(object):
 
             print('loading last training model and continue')
             saver.restore(self.sess, ckpt.model_checkpoint_path)
-
-        with open(self.config_file, 'wb') as f:
-            pickle.dump([self.args, self.vocab, self.labels], f)
         
         with tf.Graph().as_default():
             # Summaries for loss and accuracy
@@ -173,7 +168,7 @@ class Classifier(object):
     def test(self, test_file=None, data=None, batch_size=32):
         if self.model is None or self.args is None or self.args.batch_size != batch_size or self.vocab is None or self.sess is None or self.id2labels is None or self.labels is None:
             self._load_model(batch_size=batch_size)
-        data_loader = TextLoader(model_dir=self.args.model_path, data_file=test_file, data=data, batch_size=self.args.batch_size, seq_length=self.args.seq_length)
+        data_loader = TextLoader(model_dir=self.args.model_path, data_file=test_file, batch_size=self.args.batch_size, seq_length=self.args.seq_length)
         data = data_loader.tensor.copy()
         n_chunks = len(data) // self.args.batch_size
         if len(data) % self.args.batch_size:
@@ -264,9 +259,9 @@ if __name__ == '__main__':
                         help='state_is_tuple')
     args = parser.parse_args()
     # config = parser.parse_args()
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     model_path = '../../data/test-model'
     data = pd.read_csv('../../data/input.csv', encoding='utf-8')
     rnn = Classifier(model_path, args)
-    rnn.train(data=data, vocab_corpus_file='../../data/corpus.txt', args=args)
+    # rnn.train(data_file='../../data/input.csv', vocab_corpus_file='../../data/corpus.txt', args=args)
     print((rnn.test(test_file='../../data/test.csv', batch_size=5000)))
