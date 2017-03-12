@@ -24,8 +24,8 @@ class RNNModel():
             cell = rnn.DropoutWrapper(cell, output_keep_prob=self.args.keep_prob)
         self.cell = cell
 
-        self.input_data = tf.placeholder(tf.int64, [None, self.args.seq_length])
-        self.targets = tf.placeholder(tf.int64, [None, ])  # target is class label
+        self.input_data = tf.placeholder(tf.int64, [None, self.args.seq_length], name='input_data')
+        self.targets = tf.placeholder(tf.int64, [None, ], name='targets')  # target is class label
         self.initial_state = cell.zero_state(self.args.batch_size, tf.float32)
 
         with tf.variable_scope('embeddingLayer'):
@@ -43,16 +43,18 @@ class RNNModel():
             softmax_b = tf.get_variable('b', [self.args.label_size])
             logits = tf.matmul(outputs[-1], softmax_w) + softmax_b
             self.probs = tf.nn.softmax(logits)
-
-        self.cost = tf.reduce_mean(tf.contrib.nn.deprecated_flipped_sparse_softmax_cross_entropy_with_logits(logits, self.targets))  # Softmax loss
+        
+        with tf.variable_scope("loss"):
+            self.loss = tf.reduce_mean(tf.contrib.nn.deprecated_flipped_sparse_softmax_cross_entropy_with_logits(logits, self.targets), name='loss')  # Softmax loss
         self.final_state = last_state
         self.lr = tf.Variable(0.0, trainable=False)
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(self.cost)  # Adam Optimizer
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(self.loss)  # Adam Optimizer
         #self.optimizer = tf.train.AdamOptimizer(learning_rate=self.args.learning_rate).minimize(self.cost)  # Adam Optimizer
 
         self.correct_pred = tf.equal(tf.argmax(self.probs, 1), self.targets)
         self.correct_num = tf.reduce_sum(tf.cast(self.correct_pred, tf.float32))
-        self.accuracy = tf.reduce_mean(tf.cast(self.correct_pred, tf.float32))
+        with tf.variable_scope("accuracy"):
+            self.accuracy = tf.reduce_mean(tf.cast(self.correct_pred, tf.float32), name='accuracy')
 
 
     def __predict(self, sess, x):
@@ -138,17 +140,19 @@ class BIDIRNNModel():
             softmax_b = tf.get_variable('b', [self.args.label_size])
             logits = tf.matmul(outputs[-1], softmax_w) + softmax_b
             self.probs = tf.nn.softmax(logits)
-
-        self.cost = tf.reduce_mean(tf.contrib.nn.deprecated_flipped_sparse_softmax_cross_entropy_with_logits(logits, self.targets))  # Softmax loss
+        
+        with tf.variable_scope("loss"):
+            self.loss = tf.reduce_mean(tf.contrib.nn.deprecated_flipped_sparse_softmax_cross_entropy_with_logits(logits, self.targets), name="loss")  # Softmax loss
         self.final_state_fw = last_state_fw
         self.final_state_bw = last_state_bw
         self.lr = tf.Variable(0.0, trainable=False)
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(self.cost)  # Adam Optimizer
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(self.loss)  # Adam Optimizer
         #self.optimizer = tf.train.AdamOptimizer(learning_rate=self.args.learning_rate).minimize(self.cost)  # Adam Optimizer
 
         self.correct_pred = tf.equal(tf.argmax(self.probs, 1), self.targets)
         self.correct_num = tf.reduce_sum(tf.cast(self.correct_pred, tf.float32))
-        self.accuracy = tf.reduce_mean(tf.cast(self.correct_pred, tf.float32))
+        with tf.variable_scope("accuracy"):
+            self.accuracy = tf.reduce_mean(tf.cast(self.correct_pred, tf.float32), name="accuracy")
 
 
     def __predict(self, sess, x):
