@@ -5,7 +5,7 @@ import tensorflow as tf
 from tensorflow.contrib import rnn
 
 class RNNModel():
-    def __init__(self, args, deterministic=False):
+    def __init__(self, args):
         self.args = args
 
         if self.args.model == 'rnn':
@@ -20,12 +20,12 @@ class RNNModel():
         cell = cell_fn(self.args.rnn_size, self.args.state_is_tuple)
         cell = rnn.MultiRNNCell([cell] * self.args.num_layers, self.args.state_is_tuple)
 
-        if not deterministic and args.keep_prob < 1:
+        if self.args.keep_prob < 1:
             cell = rnn.DropoutWrapper(cell, output_keep_prob=self.args.keep_prob)
         self.cell = cell
 
-        self.input_data = tf.placeholder(tf.int64, [None, self.args.seq_length], name='input_data')
-        self.targets = tf.placeholder(tf.int64, [None, ], name='targets')  # target is class label
+        self.input_data = tf.placeholder(tf.int32, [None, self.args.seq_length], name='input_data')
+        self.targets = tf.placeholder(tf.int32, [None, ], name='targets')  # target is class label
         self.initial_state = cell.zero_state(self.args.batch_size, tf.float32)
 
         with tf.variable_scope('embeddingLayer'):
@@ -92,7 +92,7 @@ class RNNModel():
 
 
 class BIDIRNNModel():
-    def __init__(self, args, deterministic=False):
+    def __init__(self, args):
         self.args = args
 
         if self.args.model == 'rnn':
@@ -109,14 +109,14 @@ class BIDIRNNModel():
         bw_cell = cell_fn(self.args.rnn_size, self.args.state_is_tuple)
         bw_cell = rnn.MultiRNNCell([bw_cell] * self.args.num_layers, self.args.state_is_tuple)
 
-        if not deterministic and args.keep_prob < 1:
+        if args.keep_prob < 1:
             fw_cell = rnn.DropoutWrapper(fw_cell, output_keep_prob=self.args.keep_prob)
             bw_cell = rnn.DropoutWrapper(bw_cell, output_keep_prob=self.args.keep_prob)
         self.fw_cell = fw_cell
         self.bw_cell = bw_cell
 
-        self.input_data = tf.placeholder(tf.int64, [None, self.args.seq_length])
-        self.targets = tf.placeholder(tf.int64, [None, ])  # target is class label
+        self.input_data = tf.placeholder(tf.int32, [None, self.args.seq_length])
+        self.targets = tf.placeholder(tf.int32, [None, ])  # target is class label
         self.initial_state_fw = fw_cell.zero_state(self.args.batch_size, tf.float32)
         self.initial_state_bw = bw_cell.zero_state(self.args.batch_size, tf.float32)
         
