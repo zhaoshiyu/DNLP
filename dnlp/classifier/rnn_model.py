@@ -115,8 +115,8 @@ class BIDIRNNModel():
         self.fw_cell = fw_cell
         self.bw_cell = bw_cell
 
-        self.input_data = tf.placeholder(tf.int64, [None, self.args.seq_length])
-        self.targets = tf.placeholder(tf.int64, [None, ])  # target is class label
+        self.input_data = tf.placeholder(tf.int64, [None, self.args.seq_length], name='input_data')
+        self.targets = tf.placeholder(tf.int64, [None, ], name='targets')  # target is class label
         self.initial_state_fw = fw_cell.zero_state(self.args.batch_size, tf.float32)
         self.initial_state_bw = bw_cell.zero_state(self.args.batch_size, tf.float32)
         
