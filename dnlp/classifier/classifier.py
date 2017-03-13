@@ -258,10 +258,9 @@ if __name__ == '__main__':
     parser.add_argument('--state_is_tuple', type=bool, default=True,
                         help='state_is_tuple')
     args = parser.parse_args()
-    # config = parser.parse_args()
-    # import pdb; pdb.set_trace()
+    
     model_path = '../../data/test-model'
     data = pd.read_csv('../../data/input.csv', encoding='utf-8')
     rnn = Classifier(model_path, args)
-    # rnn.train(data_file='../../data/input.csv', vocab_corpus_file='../../data/corpus.txt', args=args)
+    rnn.train(data_file='../../data/input.csv', vocab_corpus_file='../../data/corpus.txt', args=args)
     print((rnn.test(test_file='../../data/test.csv', batch_size=5000)))
