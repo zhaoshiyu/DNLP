@@ -7,23 +7,6 @@ import numpy as np
 
 import pickle
 
-def text_to_tensor(self, vocab_dict, text, seq_length):
-    vector_ids = list(map(vocab_dict.get, text[:seq_length]))
-    vector_ids = [i if i else 0 for i in vector_ids]
-    if len(vector_ids) >= seq_length:
-        vector_ids = vector_ids[:seq_length]
-    else:
-        vector_ids = vector_ids + [0] * (seq_length - len(vector_ids))
-    return vector_ids
-
-def label_to_tensor(self, labels_dict, text_labels):
-    return np.array(list(map(labels_dict.get, text_labels)))
-
-def tensor_to_label(self, id2labels, label_ids):
-    return list(map(id2labels.get, label_ids))
-
-
-
 class Transfer(object):
     def __init__(self, data_dir, seq_length, label_data=None, vocab_corpus_file=None):
         self.seq_length = seq_length
@@ -93,5 +76,19 @@ class Transfer(object):
 
     def tensor_to_label(self, label_tensor):
         return list(map(self.id2labels.get, label_tensor))
-             
 
+
+def text_to_tensor(self, vocab_dict, text, seq_length):
+    vector_ids = list(map(vocab_dict.get, text[:seq_length]))
+    vector_ids = [i if i else 0 for i in vector_ids]
+    if len(vector_ids) >= seq_length:
+        vector_ids = vector_ids[:seq_length]
+    else:
+        vector_ids = vector_ids + [0] * (seq_length - len(vector_ids))
+    return vector_ids
+
+def label_to_tensor(self, labels_dict, text_labels):
+    return np.array(list(map(labels_dict.get, text_labels)))
+
+def tensor_to_label(self, id2labels, label_ids):
+    return list(map(id2labels.get, label_ids))
