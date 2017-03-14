@@ -99,14 +99,14 @@ class TextLoader(object):
         tensor_y = np.array(list(map(self.transfer.labels.get, data['label'])))
         return np.c_[tensor_x, tensor_y].astype(int)
 
-        def transform(self, text):
-            vector_ids = list(map(self.vocab.get, text))
-            vector_ids = [i if i else 0 for i in vector_ids]
-            if len(vector_ids) >= self.seq_length:
-                vector_ids = vector_ids[:self.seq_length]
-            else:
-                vector_ids = vector_ids + [0] * (self.seq_length - len(vector_ids))
-            return vector_ids
+    def transform(self, text):
+        vector_ids = list(map(self.vocab.get, text))
+        vector_ids = [i if i else 0 for i in vector_ids]
+        if len(vector_ids) >= self.seq_length:
+            vector_ids = vector_ids[:self.seq_length]
+        else:
+            vector_ids = vector_ids + [0] * (self.seq_length - len(vector_ids))
+        return vector_ids
 
     def create_batches(self):
         self.num_batches = int(self.tensor.shape[0] / self.batch_size)
