@@ -252,9 +252,6 @@ if __name__ == '__main__':
     parser.add_argument('--keep_prob', type=float, default=0.8,
                         help='dropout keep probability')
 
-    #parser.add_argument('--stop_loss', type=float, default=0.00001,
-    #                    help='training stop loss value')
-
     parser.add_argument('--state_is_tuple', type=bool, default=True,
                         help='state_is_tuple')
     args = parser.parse_args()
