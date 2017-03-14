@@ -34,8 +34,7 @@ class RNNModel():
                 embedded = tf.nn.embedding_lookup(W, self.input_data)
                 inputs = tf.split(embedded, self.args.seq_length, 1)
                 inputs = [tf.squeeze(input_, [1]) for input_ in inputs]
-
-        # outputs, last_state = tf.nn.rnn(cell, inputs, self.initial_state, scope='rnnLayer')
+        
         outputs, last_state = rnn.static_rnn(cell, inputs, self.initial_state, scope='rnnLayer')
 
         with tf.variable_scope('softmaxLayer'):
