@@ -218,22 +218,16 @@ if __name__ == '__main__':
     model_path = '../../data/test-model'
 
     parser = argparse.ArgumentParser()
-
     parser.add_argument('--model_path', type=str, default= model_path,
                         help='directory to store checkpointed models')
-
     parser.add_argument('--model', type=str, default='lstm',
                         help='rnn, gru or lstm, default lstm')
-
     parser.add_argument('--rnn_size', type=int, default=64,
                         help='size of RNN hidden state')
-
     parser.add_argument('--num_layers', type=int, default=2,
                         help='number of layers in RNN')
-
     parser.add_argument('--batch_size', type=int, default=16,
                         help='minibatch size')
-
     parser.add_argument('--seq_length', type=int, default=20,
                         help='RNN sequence length')
 
