@@ -230,22 +230,16 @@ if __name__ == '__main__':
                         help='minibatch size')
     parser.add_argument('--seq_length', type=int, default=20,
                         help='RNN sequence length')
-
     parser.add_argument('--num_epochs', type=int, default=50,
                         help='number of epochs')
-
     parser.add_argument('--save_every', type=int, default=1000,
                         help='save frequency')
-
     parser.add_argument('--learning_rate', type=float, default=0.001,
                         help='learning rate')
-
     parser.add_argument('--decay_rate', type=float, default=0.9,
                         help='decay rate for rmsprop')
-
     parser.add_argument('--keep_prob', type=float, default=0.8,
                         help='dropout keep probability')
-
     parser.add_argument('--state_is_tuple', type=bool, default=True,
                         help='state_is_tuple')
     args = parser.parse_args()
