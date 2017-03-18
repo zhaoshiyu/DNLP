@@ -101,9 +101,9 @@ class CNNModel(object):
 
         # CalculateMean cross-entropy loss
         with tf.name_scope("loss"):
-            self.loss = tf.reduce_mean(tf.contrib.nn.deprecated_flipped_sparse_softmax_cross_entropy_with_logits(logits=logits, labels=self.input_y))
-            # losses = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=self.input_y)
-            # self.loss = tf.reduce_mean(losses) + self.l2_reg_lambda * l2_loss
+            # self.loss = tf.reduce_mean(tf.contrib.nn.deprecated_flipped_sparse_softmax_cross_entropy_with_logits(logits=logits, labels=self.input_y))
+            losses = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=self.input_y)
+            self.loss = tf.reduce_mean(losses) + self.l2_reg_lambda * l2_loss
 
         # Accuracy
         with tf.name_scope("accuracy"):
