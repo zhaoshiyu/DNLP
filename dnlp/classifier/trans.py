@@ -86,9 +86,3 @@ def text_to_tensor(self, vocab_dict, text, seq_length):
     else:
         vector_ids = vector_ids + [0] * (seq_length - len(vector_ids))
     return vector_ids
-
-def label_to_tensor(self, labels_dict, text_labels):
-    return np.array(list(map(labels_dict.get, text_labels)))
-
-def tensor_to_label(self, id2labels, label_ids):
-    return list(map(id2labels.get, label_ids))

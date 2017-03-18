@@ -34,8 +34,7 @@ class RNNModel():
                 embedded = tf.nn.embedding_lookup(W, self.input_data)
                 inputs = tf.split(embedded, self.args.seq_length, 1)
                 inputs = [tf.squeeze(input_, [1]) for input_ in inputs]
-
-        # outputs, last_state = tf.nn.rnn(cell, inputs, self.initial_state, scope='rnnLayer')
+        
         outputs, last_state = rnn.static_rnn(cell, inputs, self.initial_state, scope='rnnLayer')
 
         with tf.variable_scope('softmaxLayer'):
@@ -126,8 +125,7 @@ class BIDIRNNModel():
                 embedded = tf.nn.embedding_lookup(W, self.input_data)
                 inputs = tf.split(embedded, self.args.seq_length, 1)
                 inputs = [tf.squeeze(input_, [1]) for input_ in inputs]
-
-        # outputs, last_state = rnn.static_rnn(cell, inputs, self.initial_state, scope='rnnLayer')
+        
         used = tf.sign(tf.reduce_max(tf.abs(inputs), reduction_indices=2))
         self.length = tf.cast(tf.reduce_sum(used, reduction_indices=0), tf.int32)
         outputs, last_state_fw, last_state_bw = rnn.static_bidirectional_rnn(fw_cell, bw_cell,

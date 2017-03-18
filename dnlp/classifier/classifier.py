@@ -218,43 +218,28 @@ if __name__ == '__main__':
     model_path = '../../data/test-model'
 
     parser = argparse.ArgumentParser()
-
     parser.add_argument('--model_path', type=str, default= model_path,
                         help='directory to store checkpointed models')
-
     parser.add_argument('--model', type=str, default='lstm',
                         help='rnn, gru or lstm, default lstm')
-
     parser.add_argument('--rnn_size', type=int, default=64,
                         help='size of RNN hidden state')
-
     parser.add_argument('--num_layers', type=int, default=2,
                         help='number of layers in RNN')
-
     parser.add_argument('--batch_size', type=int, default=16,
                         help='minibatch size')
-
     parser.add_argument('--seq_length', type=int, default=20,
                         help='RNN sequence length')
-
     parser.add_argument('--num_epochs', type=int, default=50,
                         help='number of epochs')
-
     parser.add_argument('--save_every', type=int, default=1000,
                         help='save frequency')
-
     parser.add_argument('--learning_rate', type=float, default=0.001,
                         help='learning rate')
-
     parser.add_argument('--decay_rate', type=float, default=0.9,
                         help='decay rate for rmsprop')
-
     parser.add_argument('--keep_prob', type=float, default=0.8,
                         help='dropout keep probability')
-
-    #parser.add_argument('--stop_loss', type=float, default=0.00001,
-    #                    help='training stop loss value')
-
     parser.add_argument('--state_is_tuple', type=bool, default=True,
                         help='state_is_tuple')
     args = parser.parse_args()
