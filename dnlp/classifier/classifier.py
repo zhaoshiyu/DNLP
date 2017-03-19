@@ -19,23 +19,26 @@ class Classifier(object):
     def __init__(self, model_path, args):
         assert os.path.isdir(model_path), '%s must be a path' % model_path
         self.model_path = model_path
-        self.config_file = os.path.join(self.model_path, 'config.pkl')
+        self.config_vocab_labels_file = os.path.join(self.model_path, 'config_vocab_labels.pkl')
         self.args = args
-        self.transfer = None
+        self.args.label_size = None
+        self.args.vocab_size = None
+        self.vocab = None
+        self.labels = None
         self.model = None
         self.sess = tf.Session()
-        if os.path.exists(self.config_file):
+        if os.path.exists(self.config_vocab_labels_file):
             self._load_config()
 
     def _load_config(self):
-        with open(self.config_file, 'rb') as f:
-            saved_args = pickle.load(f)
-        assert saved_args, 'load config error'
-        self.args = saved_args
-        with open(os.path.join(self.model_path, 'test.pkl'), 'rb') as f:
+        with open(self.config_vocab_labels_file, 'rb') as f:
             saved_args, vocab, labels = pickle.load(f)
-        import pdb; pdb.set_trace()
-        print(labels)
+        assert saved_args, 'load config error'
+        assert vocab, 'load vocab error'
+        assert labels, 'load labels error'
+        self.args = saved_args
+        self.vocab = vocab
+        self.labels = labels
 
     def _load_model(self, batch_size=None):
         print('loading model ... ')
@@ -83,38 +86,67 @@ class Classifier(object):
             self.sess.close()
         self.sess = None
 
-    def train(self, data_file=None, data=None, vocab_corpus_file=None, args=None, continued=False):
-        data_loader = TextLoader(model_dir=self.args.model_path, data_file=data_file, vocab_corpus_file=vocab_corpus_file, batch_size=self.args.batch_size, seq_length=self.args.seq_length)
-        self.transfer = data_loader.transfer
-        self.args.vocab_size = data_loader.transfer.vocab_size
-        self.args.label_size = data_loader.transfer.label_size
+    def train(self, data_file=None, data=None, dev_data_file=None, vocab_corpus_file=None, args=None, continued=True):
+        if self.vocab and self.labels:
+            train_data_loader = TextLoader(model_dir=self.args.model_path, 
+                                           data_file=data_file, 
+                                           vocab_corpus_file=vocab_corpus_file, 
+                                           batch_size=self.args.batch_size, 
+                                           seq_length=self.args.seq_length,
+                                           vocab=self.vocab,
+                                           labels=self.labels)
+        else:
+            train_data_loader = TextLoader(model_dir=self.args.model_path, 
+                                           data_file=data_file, 
+                                           vocab_corpus_file=vocab_corpus_file, 
+                                           batch_size=self.args.batch_size, 
+                                           seq_length=self.args.seq_length)
+        
+        if dev_data_file:
+            if self.vocab and self.labels:
+                vocab = self.vocab
+                labels = self.labels
+            else:
+                vocab = train_data_loader.vocab
+                labels = train_data_loader.labels
+            dev_data_loader = TextLoader(model_dir=self.args.model_path, 
+                                        data_file=data_file, 
+                                        batch_size=self.args.batch_size, 
+                                        seq_length=self.args.seq_length,
+                                        vocab=vocab,
+                                        labels=labels)
 
-        with open(self.config_file, 'wb') as f:
-            pickle.dump(self.args, f)
-        with open(os.path.join(self.model_path, 'test.pkl'), 'wb') as f:
-            pickle.dump([self.args, self.transfer.vocab, self.transfer.labels], f)
-
+        if not self.args.vocab_size and not self.args.label_size:
+            self.args.vocab_size = train_data_loader.vocab_size
+            self.args.label_size = train_data_loader.label_size
+        
         self._init_model()
         init = tf.global_variables_initializer()
         self.sess.run(init)
         saver = tf.train.Saver(tf.global_variables())
 
-        # import pdb; pdb.set_trace()
-        if os.path.isfile(self.config_file) and continued:
+        if os.path.isfile(self.config_vocab_labels_file) and continued:
             ckpt = tf.train.get_checkpoint_state(self.args.model_path)
             assert ckpt, 'No checkpoint found'
             assert ckpt.model_checkpoint_path, 'No model path found in checkpoint'
 
-            self._load_config()
-            need_be_same = ['model', 'rnn_size', 'num_layers', 'seq_length']
-            for checkme in need_be_same:
-                assert vars(self.args)[checkme] == vars(self.args)[checkme], 'command line argument and saved model disagree on %s' % checkme
-
-            assert self.vocab == data_loader.vocab, 'data and loaded model disagree on dictionary mappings'
-            assert self.labels == data_loader.labels, 'data and loaded model disagree on label dictionary mappings'
+            # self._load_config()
+            # need_be_same = ['model', 'rnn_size', 'num_layers', 'seq_length']
+            # for checkme in need_be_same:
+            #     assert vars(self.args)[checkme] == vars(self.args)[checkme], 'command line argument and saved model disagree on %s' % checkme
+            # import pdb; pdb.set_trace()
+            assert len(self.vocab) == len(train_data_loader.vocab), 'data and loaded model disagree on dictionary mappings'
+            assert len(self.labels) == len(train_data_loader.labels), 'data and loaded model disagree on label dictionary mappings'
 
             print('loading last training model and continue')
             saver.restore(self.sess, ckpt.model_checkpoint_path)
+        else:
+            self.vocab = train_data_loader.vocab
+            self.labels = train_data_loader.labels
+            self.args.vocab_size = train_data_loader.vocab_size
+            self.args.label_size = train_data_loader.label_size
+            with open(self.config_vocab_labels_file, 'wb') as f:
+                pickle.dump([self.args, self.vocab, self.labels], f)
         
         with tf.Graph().as_default():
             # Summaries for loss and accuracy
@@ -126,29 +158,43 @@ class Classifier(object):
             train_summary_dir = os.path.join(self.model_path, "summaries", "train")
             train_summary_writer = tf.summary.FileWriter(train_summary_dir, self.sess.graph)
 
+            if dev_data_loader:
+                # Dev summaries
+                dev_summary_op = tf.summary.merge([loss_summary, acc_summary])
+                dev_summary_dir = os.path.join(self.model_path, "summaries", "dev")
+                dev_summary_writer = tf.summary.FileWriter(dev_summary_dir, self.sess.graph)
+
             for epoch in range(self.args.num_epochs):
                 self.sess.run(tf.assign(self.model.lr, self.args.learning_rate * (self.args.decay_rate ** epoch)))
-                data_loader.reset_batch_pointer()
-                for batch in range(data_loader.num_batches):
+                train_data_loader.reset_batch_pointer()
+                for batch in range(train_data_loader.num_batches):
                     start = time.time()
-                    x, y = data_loader.next_batch()
+                    x, y = train_data_loader.next_batch()
                     feed = {self.model.input_data: x, self.model.targets: y}
                     train_loss, _, accuracy, summaries = self.sess.run([self.model.loss, self.model.optimizer, self.model.accuracy, train_summary_op], feed_dict=feed)
                     end = time.time()
                     print('{}/{} (epoch {}/{}), loss = {:.5f}, accuracy = {:.3f}, time/batch = {:.3f}'\
-                        .format(epoch * data_loader.num_batches + batch + 1,
-                                self.args.num_epochs * data_loader.num_batches,
+                        .format(epoch * train_data_loader.num_batches + batch + 1,
+                                self.args.num_epochs * train_data_loader.num_batches,
                                 epoch + 1,
                                 self.args.num_epochs,
                                 train_loss,
                                 accuracy,
                                 end - start))
-                    train_summary_writer.add_summary(summaries, epoch * data_loader.num_batches + batch + 1)
-                    if (epoch * data_loader.num_batches + batch + 1) % args.save_every == 0 \
-                        or (epoch == args.num_epochs-1 and batch == data_loader.num_batches-1):
+                    train_summary_writer.add_summary(summaries, epoch * train_data_loader.num_batches + batch + 1)
+                    if (epoch * train_data_loader.num_batches + batch + 1) % args.save_every == 0 \
+                        or (epoch == args.num_epochs-1 and batch == train_data_loader.num_batches-1):
                         checkpoint_path = os.path.join(self.args.model_path, 'model.ckpt')
-                        saver.save(self.sess, checkpoint_path, global_step=epoch * data_loader.num_batches + batch + 1)
+                        saver.save(self.sess, checkpoint_path, global_step=epoch * train_data_loader.num_batches + batch + 1)
                         print('model saved to {}'.format(checkpoint_path))
+
+                        if dev_data_loader:
+                            x, y = dev_data_loader.next_batch()
+                            feed = {self.model.input_data: x, self.model.targets: y}
+                            dev_loss, _, dev_accuracy, dev_summaries = self.sess.run([self.model.loss, self.model.optimizer, self.model.accuracy, train_summary_op], feed_dict=feed)
+                            print('dev_loss = {:.5f}, dev_accuracy = {:.3f}'.format(dev_loss, dev_accuracy))
+                            if dev_summary_writer:
+                                dev_summary_writer.add_summary(dev_summaries, epoch * train_data_loader.num_batches + batch + 1) 
 
 
     def predict(self, contents, batch_size=32):
@@ -222,17 +268,17 @@ if __name__ == '__main__':
                         help='directory to store checkpointed models')
     parser.add_argument('--model', type=str, default='lstm',
                         help='rnn, gru or lstm, default lstm')
-    parser.add_argument('--rnn_size', type=int, default=64,
+    parser.add_argument('--rnn_size', type=int, default=128,
                         help='size of RNN hidden state')
     parser.add_argument('--num_layers', type=int, default=2,
                         help='number of layers in RNN')
-    parser.add_argument('--batch_size', type=int, default=16,
+    parser.add_argument('--batch_size', type=int, default=128,
                         help='minibatch size')
-    parser.add_argument('--seq_length', type=int, default=20,
+    parser.add_argument('--seq_length', type=int, default=25,
                         help='RNN sequence length')
-    parser.add_argument('--num_epochs', type=int, default=50,
+    parser.add_argument('--num_epochs', type=int, default=100,
                         help='number of epochs')
-    parser.add_argument('--save_every', type=int, default=1000,
+    parser.add_argument('--save_every', type=int, default=100,
                         help='save frequency')
     parser.add_argument('--learning_rate', type=float, default=0.001,
                         help='learning rate')
@@ -245,7 +291,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     model_path = '../../data/test-model'
-    data = pd.read_csv('../../data/input.csv', encoding='utf-8')
+    # data = pd.read_csv('../../data/train.csv', encoding='utf-8')
     rnn = Classifier(model_path, args)
-    rnn.train(data_file='../../data/input.csv', vocab_corpus_file='../../data/corpus.txt', args=args)
-    print((rnn.test(test_file='../../data/test.csv', batch_size=5000)))
+    rnn.train(data_file='../../data/train.csv', dev_data_file='../../data/test.csv', vocab_corpus_file='../../data/corpus.csv', args=args)
+    print((rnn.test(test_file='../../data/test.csv', batch_size=2000)))
