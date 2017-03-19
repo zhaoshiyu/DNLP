@@ -290,8 +290,8 @@ if __name__ == '__main__':
                         help='state_is_tuple')
     args = parser.parse_args()
     
-    model_path = '../../data/test-model'
     # data = pd.read_csv('../../data/train.csv', encoding='utf-8')
+    model_path = '../../data/test-model'
     rnn = Classifier(model_path, args)
     rnn.train(data_file='../../data/train.csv', dev_data_file='../../data/test.csv', vocab_corpus_file='../../data/corpus.csv', args=args)
     print((rnn.test(test_file='../../data/test.csv', batch_size=2000)))
