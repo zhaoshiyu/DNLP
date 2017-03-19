@@ -7,8 +7,6 @@ import pickle
 import numpy as np
 import pandas as pd
 
-from trans import Transfer
-
 
 class TextLoader(object):
     def __init__(self, 
