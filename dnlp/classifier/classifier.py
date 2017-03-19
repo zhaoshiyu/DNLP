@@ -278,7 +278,7 @@ if __name__ == '__main__':
                         help='RNN sequence length')
     parser.add_argument('--num_epochs', type=int, default=100,
                         help='number of epochs')
-    parser.add_argument('--save_every', type=int, default=100,
+    parser.add_argument('--save_every', type=int, default=1000,
                         help='save frequency')
     parser.add_argument('--learning_rate', type=float, default=0.001,
                         help='learning rate')
