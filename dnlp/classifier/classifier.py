@@ -39,6 +39,7 @@ class Classifier(object):
         self.args = saved_args
         self.vocab = vocab
         self.labels = labels
+        self.id2labels = dict(list(zip(list(labels.values()), list(labels.keys()))))
 
     def _load_model(self, batch_size=None):
         print('loading model ... ')
@@ -214,7 +215,12 @@ class Classifier(object):
     def test(self, test_file=None, data=None, batch_size=32):
         if self.model is None or self.args is None or self.args.batch_size != batch_size or self.vocab is None or self.sess is None or self.id2labels is None or self.labels is None:
             self._load_model(batch_size=batch_size)
-        data_loader = TextLoader(model_dir=self.args.model_path, data_file=test_file, batch_size=self.args.batch_size, seq_length=self.args.seq_length)
+        data_loader = TextLoader(model_dir=self.args.model_path, 
+                                 data_file=test_file, 
+                                 batch_size=self.args.batch_size, 
+                                 seq_length=self.args.seq_length,
+                                 vocab=self.vocab,
+                                 labels=self.labels)
         data = data_loader.tensor.copy()
         n_chunks = len(data) // self.args.batch_size
         if len(data) % self.args.batch_size:
@@ -293,5 +299,6 @@ if __name__ == '__main__':
     # data = pd.read_csv('../../data/train.csv', encoding='utf-8')
     model_path = '../../data/test-model'
     rnn = Classifier(model_path, args)
-    rnn.train(data_file='../../data/train.csv', dev_data_file='../../data/test.csv', vocab_corpus_file='../../data/corpus.csv', args=args)
-    print((rnn.test(test_file='../../data/test.csv', batch_size=2000)))
+    # rnn.train(data_file='../../data/train.csv', dev_data_file='../../data/test.csv', vocab_corpus_file='../../data/corpus.csv', args=args)
+    print(rnn.predict(['英超-曼联3-1米堡升至第5 红魔迎来英超600胜']))
+    print((rnn.test(test_file='../../data/test.csv', batch_size=32)))
