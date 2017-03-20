@@ -190,7 +190,7 @@ class Classifier(object):
                         if dev_data_loader:
                             x, y = dev_data_loader.next_batch()
                             feed = {self.model.input_data: x, self.model.targets: y}
-                            dev_loss, _, dev_accuracy, dev_summaries = self.sess.run([self.model.loss, self.model.optimizer, self.model.accuracy, train_summary_op], feed_dict=feed)
+                            dev_loss, _, dev_accuracy, dev_summaries = self.sess.run([self.model.loss, self.model.optimizer, self.model.accuracy, dev_summary_op], feed_dict=feed)
                             print('dev_loss = {:.5f}, dev_accuracy = {:.3f}'.format(dev_loss, dev_accuracy))
                             if dev_summary_writer:
                                 dev_summary_writer.add_summary(dev_summaries, epoch * train_data_loader.num_batches + batch + 1) 
