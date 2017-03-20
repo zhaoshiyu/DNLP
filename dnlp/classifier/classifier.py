@@ -290,6 +290,6 @@ if __name__ == '__main__':
     # data = pd.read_csv('../../data/train.csv', encoding='utf-8')
     model_path = '../../data/test-model'
     rnn = Classifier(model_path, args)
-    # rnn.train(data_file='../../data/train.csv', dev_data_file='../../data/test.csv', vocab_corpus_file='../../data/corpus.csv', args=args)
+    rnn.train(data_file='../../data/train.csv', dev_data_file='../../data/test.csv', vocab_corpus_file='../../data/corpus.csv', args=args)
     print(rnn.predict(['英超-曼联3-1米堡升至第5 红魔迎来英超600胜']))
     print((rnn.test(test_file='../../data/test.csv', batch_size=32)))
