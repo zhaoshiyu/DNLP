@@ -86,20 +86,13 @@ class Classifier(object):
         self.sess = None
 
     def train(self, data_file=None, data=None, dev_data_file=None, vocab_corpus_file=None, args=None, continued=True):
-        if self.vocab and self.labels:
-            train_data_loader = TextLoader(model_dir=self.args.model_path, 
-                                           data_file=data_file, 
-                                           vocab_corpus_file=vocab_corpus_file, 
-                                           batch_size=self.args.batch_size, 
-                                           seq_length=self.args.seq_length,
-                                           vocab=self.vocab,
-                                           labels=self.labels)
-        else:
-            train_data_loader = TextLoader(model_dir=self.args.model_path, 
-                                           data_file=data_file, 
-                                           vocab_corpus_file=vocab_corpus_file, 
-                                           batch_size=self.args.batch_size, 
-                                           seq_length=self.args.seq_length)
+        train_data_loader = TextLoader(model_dir=self.args.model_path, 
+                                       data_file=data_file, 
+                                       vocab_corpus_file=vocab_corpus_file, 
+                                       batch_size=self.args.batch_size, 
+                                       seq_length=self.args.seq_length,
+                                       vocab=self.vocab,
+                                       labels=self.labels)
         
         if dev_data_file:
             if self.vocab and self.labels:
