@@ -55,11 +55,11 @@ class Classifier(object):
         try:
             with tf.variable_scope("classifier"):
                 self.model = RNNModel(self.args)
-                # self.model = BIDIRNNModel(self.args, deterministic=deterministic)
+                # self.model = BIDIRNNModel(self.args)
         except ValueError as ve:
             with tf.variable_scope("classifier", reuse=True):
                 self.model = RNNModel(self.args)
-                # self.model = BIDIRNNModel(self.args, deterministic=deterministic)
+                # self.model = BIDIRNNModel(self.args)
 
     def _transform(self, text):
         text = text if type('') == type(text) else text.decode('utf-8')
@@ -121,15 +121,13 @@ class Classifier(object):
             ckpt = tf.train.get_checkpoint_state(self.args.model_path)
             assert ckpt, 'No checkpoint found'
             assert ckpt.model_checkpoint_path, 'No model path found in checkpoint'
-
-            # self._load_config()
-            # need_be_same = ['model', 'rnn_size', 'num_layers', 'seq_length']
-            # for checkme in need_be_same:
-            #     assert vars(self.args)[checkme] == vars(self.args)[checkme], 'command line argument and saved model disagree on %s' % checkme
-            # import pdb; pdb.set_trace()
+            with open(self.config_vocab_labels_file, 'rb') as f:
+                saved_args, vocab, labels = pickle.load(f)
+            need_be_same = ['model', 'rnn_size', 'num_layers', 'seq_length']
+            for checkme in need_be_same:
+                assert vars(saved_args)[checkme] == vars(self.args)[checkme], 'command line argument and saved model disagree on %s' % checkme
             assert len(self.vocab) == len(train_data_loader.vocab), 'data and loaded model disagree on dictionary mappings'
             assert len(self.labels) == len(train_data_loader.labels), 'data and loaded model disagree on label dictionary mappings'
-
             print('loading last training model and continue')
             saver.restore(self.sess, ckpt.model_checkpoint_path)
         else:
@@ -155,6 +153,7 @@ class Classifier(object):
                 dev_summary_op = tf.summary.merge([loss_summary, acc_summary])
                 dev_summary_dir = os.path.join(self.model_path, "summaries", "dev")
                 dev_summary_writer = tf.summary.FileWriter(dev_summary_dir, self.sess.graph)
+                dev_batch_count = 0
 
             for epoch in range(self.args.num_epochs):
                 self.sess.run(tf.assign(self.model.lr, self.args.learning_rate * (self.args.decay_rate ** epoch)))
@@ -180,6 +179,10 @@ class Classifier(object):
                         saver.save(self.sess, checkpoint_path, global_step=epoch * train_data_loader.num_batches + batch + 1)
                         print('model saved to {}'.format(checkpoint_path))
 
+                        dev_batch_count += 1
+                        if dev_batch_count == dev_data_loader.num_batches:
+                            dev_data_loader.reset_batch_pointer()
+                            dev_batch_count = 0
                         if dev_data_loader:
                             x, y = dev_data_loader.next_batch()
                             feed = {self.model.input_data: x, self.model.targets: y}
@@ -275,7 +278,7 @@ if __name__ == '__main__':
                         help='RNN sequence length')
     parser.add_argument('--num_epochs', type=int, default=100,
                         help='number of epochs')
-    parser.add_argument('--save_every', type=int, default=1000,
+    parser.add_argument('--save_every', type=int, default=100,
                         help='save frequency')
     parser.add_argument('--learning_rate', type=float, default=0.001,
                         help='learning rate')
@@ -290,6 +293,6 @@ if __name__ == '__main__':
     # data = pd.read_csv('../../data/train.csv', encoding='utf-8')
     model_path = '../../data/test-model'
     rnn = Classifier(model_path, args)
-    # rnn.train(data_file='../../data/train.csv', dev_data_file='../../data/test.csv', vocab_corpus_file='../../data/corpus.csv', args=args)
+    rnn.train(data_file='../../data/train.csv', dev_data_file='../../data/test.csv', vocab_corpus_file='../../data/corpus.csv', args=args)
     print(rnn.predict(['英超-曼联3-1米堡升至第5 红魔迎来英超600胜']))
     print((rnn.test(test_file='../../data/test.csv', batch_size=32)))
