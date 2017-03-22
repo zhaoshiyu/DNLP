@@ -16,7 +16,7 @@ class Transfer(object):
                 self.vocab, self.labels = pickle.load(f)
         elif label_data and vocab_corpus_file:
             self.labels = self.preprocess_labels(label_data)
-            assert os.path.isfile(vocab_corpus_file), '%s file does not exist' % vocab_corpus_file
+            assert os.path.isfile(vocab_corpus_file), '%s file does not exist .' % vocab_corpus_file
             self.vocab = self.preprocess_vocab_file(vocab_corpus_file)
             with open(self.vocab_labels_file, 'wb') as f:
                 pickle.dump([self.vocab, self.labels], f)
@@ -45,7 +45,7 @@ class Transfer(object):
         
     def preprocess_vocab_file(self, vocab_corpus_file):
         if not os.path.exists(vocab_corpus_file):
-            print('not vocab corpus file')
+            print('not vocab corpus file .')
             exit(1)
         with open(vocab_corpus_file, 'r') as f:
             corpus = f.readlines()
