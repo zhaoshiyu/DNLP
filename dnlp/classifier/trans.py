@@ -53,15 +53,6 @@ class Transfer(object):
             # corpus = corpus.decode('utf8')
         return self.preprocess_vocab(corpus)
 
-    def transform(self, text):
-        vector_ids = list(map(self.vocab.get, text))
-        vector_ids = [i if i else 0 for i in vector_ids]
-        if len(vector_ids) >= self.seq_length:
-            vector_ids = vector_ids[:self.seq_length]
-        else:
-            vector_ids = vector_ids + [0] * (self.seq_length - len(vector_ids))
-        return vector_ids
-
     def text_to_tensor(self, text):
         vector_ids = list(map(self.vocab.get, text[:self.seq_length]))
         vector_ids = [i if i else 0 for i in vector_ids]
