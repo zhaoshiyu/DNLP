@@ -9,9 +9,9 @@ class CNNModel(object):
     embedding layer, followed by convolutional, max-pooling and softmax layer
     """
     def __init__(
-      self, sequence_length, label_size, vocab_size,
+      self, seq_length, label_size, vocab_size,
       embedding_size, filter_sizes, num_filters, l2_reg_lambda=0.0):
-        self.seq_length = sequence_length
+        self.seq_length = seq_length
         self.label_size = label_size
         self.vocab_size = vocab_size
         self.embedding_size = embedding_size
@@ -104,6 +104,9 @@ class CNNModel(object):
             # self.loss = tf.reduce_mean(tf.contrib.nn.deprecated_flipped_sparse_softmax_cross_entropy_with_logits(logits=logits, labels=self.input_y))
             losses = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=self.input_y)
             self.loss = tf.reduce_mean(losses) + self.l2_reg_lambda * l2_loss
+        
+        self.lr = tf.Variable(0.0, trainable=False)
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(self.loss)
 
         # Accuracy
         with tf.name_scope("accuracy"):
