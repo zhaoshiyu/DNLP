@@ -246,29 +246,7 @@ class CNNClassifier(object):
                     print("Saved model checkpoint to {}\n".format(path))
 
 
-
-# class Config(object):
-#     model_path = '../../data/test-model'
-#     train_file = '../../data/input.csv'
-#     vocab_corpus_file = '../../data/corpus.txt'
-#     init_from = None
-#     model = 'lstm'
-#     state_is_tuple = True
-#     learning_rate = 0.001
-#     decay_rate = 0.9
-#     keep_prob = 0.8
-#     rnn_size = 64
-#     num_layers = 2
-#     seq_length = 20
-#     batch_size = 16
-#     num_epochs = 20
-#     num_epochs = 50
-#     save_every = 100
-#     vocab_size = None
-#     label_size = None
-
 if __name__ == '__main__':
-    # cnn_classifier_train_test()
     model_path = '../../data/test-model-cnn'
 
     parser = argparse.ArgumentParser()
