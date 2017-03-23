@@ -268,7 +268,6 @@ class CNNClassifier(object):
 #     label_size = None
 
 if __name__ == '__main__':
-    # rnn_classifier_train_test()
     # cnn_classifier_train_test()
     model_path = '../../data/test-model-cnn'
 
