@@ -437,7 +437,6 @@ class CNNClassifier(object):
                 step, summaries, loss, accuracy = self.sess.run(
                     [global_step, train_summary_op, self.model.loss, self.model.accuracy],
                     feed_dict)
-                # time_str = datetime.datetime.now().isoformat()
                 # print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
                 print("step {}, loss {:g}, acc {:g}".format(step, loss, accuracy))
                 train_summary_writer.add_summary(summaries, step)
