@@ -468,7 +468,6 @@ class CNNClassifier(object):
                 x_batch, y_batch = train_data_loader.next_batch()
                 train_step(x_batch, y_batch, step)
                 current_step = tf.train.global_step(self.sess, global_step)
-                # current_step = tf.train.global_step(self.sess)
                 if current_step % self.args.evaluate_every == 0:
                     print("\nEvaluation:")
                     # dev_step(x_dev, y_dev, writer=dev_summary_writer)
