@@ -424,7 +424,6 @@ class CNNClassifier(object):
                 """
                 A single training step
                 """
-                # y_batch = np.asarray([np.argmax(y_i) for y_i in y_batch])
                 feed_dict = {
                 self.model.input_x: x_batch,
                 self.model.input_y: y_batch,
