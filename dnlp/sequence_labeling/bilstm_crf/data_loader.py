@@ -120,10 +120,10 @@ def loadMap(token2id_filepath):
 def saveMap(id2char, id2label):
 	with open("char2id", "wb") as outfile:
 		for idx in id2char:
-			outfile.write(id2char[idx] + "\t" + str(idx)  + "\r\n")
+			outfile.write(id2char[idx] + "\t" + str(idx)  + "\n")
 	with open("label2id", "wb") as outfile:
 		for idx in id2label:
-			outfile.write(id2label[idx] + "\t" + str(idx) + "\r\n")
+			outfile.write(id2label[idx] + "\t" + str(idx) + "\n")
 	print("saved map between token and id")
 
 def buildMap(train_path="train.in"):
