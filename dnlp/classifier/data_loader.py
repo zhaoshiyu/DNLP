@@ -128,8 +128,9 @@ class TextLoader(object):
         return np.c_[tensor_x, tensor_y].astype(int)
 
     def transform(self, text):
-        vector_ids = list(map(self.vocab.get, text))
-        vector_ids = [i if i else 0 for i in vector_ids]
+        vector_ids = map(self.vocab.get, text)
+        vector_ids = list(map(lambda i: i if i else 0, vector_ids))
+        # vector_ids = [i if i else 0 for i in vector_ids]
         if len(vector_ids) >= self.seq_length:
             vector_ids = vector_ids[:self.seq_length]
         else:
