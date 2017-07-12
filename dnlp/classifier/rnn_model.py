@@ -8,11 +8,11 @@ class RNNModel():
     def __init__(self, args):
         self.args = args
 
-        if self.args.model == 'rnn':
+        if self.args.model == 'RNN':
             cell_fn = rnn.BasicRNNCell
-        elif self.args.model == 'gru':
+        elif self.args.model == 'GRU':
             cell_fn = rnn.GRUCell
-        elif self.args.model == 'lstm':
+        elif self.args.model == 'LSTM':
             cell_fn = rnn.BasicLSTMCell
         else:
             raise Exception('model type not supported: {}'.format(self.args.model))

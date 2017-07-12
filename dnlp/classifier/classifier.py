@@ -499,8 +499,8 @@ def rnn_classifier_train_test():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path', type=str, default= model_path,
                         help='directory to store checkpointed models')
-    parser.add_argument('--model', type=str, default='lstm',
-                        help='rnn, gru or lstm, default lstm')
+    parser.add_argument('--model', type=str, default='LSTM',
+                        help='RNN, GRU or LSTM, default LSTM')
     parser.add_argument('--rnn_size', type=int, default=128,
                         help='size of RNN hidden state')
     parser.add_argument('--num_layers', type=int, default=2,
