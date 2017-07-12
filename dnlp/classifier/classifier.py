@@ -3,6 +3,7 @@
 
 import os
 import time
+import math
 import argparse
 import pickle
 
@@ -197,10 +198,7 @@ class RNNClassifier(object):
         if self.model is None or self.args is None or self.args.batch_size != batch_size or self.vocab is None or self.sess is None or self.id2labels is None:
             self._load_model(batch_size=batch_size)
         x = [self._transform(i.strip()) for i in contents]
-        x_len = len(x)
-        n_chunks = x_len // self.args.batch_size
-        if x_len % self.args.batch_size:
-            n_chunks += 1
+        n_chunks = math.ceil(len(x) / self.args.batch_size)
         x = np.array_split(x[:self.args.batch_size*n_chunks], n_chunks, axis=0)
         results = []
         for m in range(n_chunks):
@@ -217,9 +215,7 @@ class RNNClassifier(object):
                                  vocab=self.vocab,
                                  labels=self.labels)
         data = data_loader.tensor.copy()
-        n_chunks = len(data) // self.args.batch_size
-        if len(data) % self.args.batch_size:
-            n_chunks += 1
+        n_chunks = math.ceil(len(data) / self.args.batch_size)
         data_list = np.array_split(data[:self.args.batch_size*n_chunks], n_chunks, axis=0)
         correct_total = 0.0
         num_total = 0.0
