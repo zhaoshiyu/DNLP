@@ -44,7 +44,7 @@ class RNNClassifier(object):
     def _load_model(self, batch_size=None):
         print('loading model ... ')
         # self.__load_config()
-        if batch_size is not None:
+        if batch_size:
             self.args.batch_size = batch_size
         self._init_model()
         saver =tf.train.Saver(tf.global_variables())
@@ -267,7 +267,7 @@ class CNNClassifier(object):
     def _load_model(self, batch_size=None):
         print('loading model ... ')
         # self.__load_config()
-        if batch_size is not None:
+        if batch_size:
             self.args.batch_size = batch_size
         self._init_model()
         saver =tf.train.Saver(tf.global_variables())
@@ -375,7 +375,7 @@ class CNNClassifier(object):
             # # Keep track of gradient values and sparsity (optional)
             # grad_summaries = []
             # for g, v in grads_and_vars:
-            #     if g is not None:
+            #     if g:
             #         grad_hist_summary = tf.summary.histogram("{}/grad/hist".format(v.name), g)
             #         sparsity_summary = tf.summary.scalar("{}/grad/sparsity".format(v.name), tf.nn.zero_fraction(g))
             #         grad_summaries.append(grad_hist_summary)
