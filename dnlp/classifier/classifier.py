@@ -53,7 +53,7 @@ class RNNClassifier(object):
             saver.restore(self.sess, ckpt.model_checkpoint_path)
 
     def _init_model(self):
-        # if self.model is None:
+        # if not self.model:
         try:
             with tf.variable_scope("classifier"):
                 self.model = RNNModel(self.args)
@@ -195,7 +195,7 @@ class RNNClassifier(object):
 
 
     def predict(self, contents, batch_size=32):
-        if self.model is None or self.args is None or self.args.batch_size != batch_size or self.vocab is None or self.sess is None or self.id2labels is None:
+        if not self.model or not self.args or self.args.batch_size != batch_size or not self.vocab or not self.sess or not self.id2labels:
             self._load_model(batch_size=batch_size)
         x = [self._transform(i.strip()) for i in contents]
         n_chunks = math.ceil(len(x) / self.args.batch_size)
@@ -206,7 +206,7 @@ class RNNClassifier(object):
         return results
 
     def test(self, test_file=None, data=None, batch_size=32):
-        if self.model is None or self.args is None or self.args.batch_size != batch_size or self.vocab is None or self.sess is None or self.id2labels is None or self.labels is None:
+        if not self.model or not self.args or self.args.batch_size != batch_size or not self.vocab or not self.sess or not self.id2labels or not self.labels:
             self._load_model(batch_size=batch_size)
         data_loader = TextLoader(model_dir=self.args.model_path, 
                                  data_file=test_file, 
@@ -276,7 +276,7 @@ class CNNClassifier(object):
             saver.restore(self.sess, ckpt.model_checkpoint_path)
 
     def _init_model(self):
-        # if self.model is None:
+        # if not self.model:
         try:
             with tf.variable_scope("classifier"):
                 self.model = CNNModel(
