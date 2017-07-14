@@ -36,8 +36,8 @@ class TextLoader(object):
             exit(1)
         if model_dir:
             self.model_dir = model_dir
-            self.labels = labels if labels is not None else self.preprocess_labels(self.data['label'])
-            if vocab is not None:
+            self.labels = labels if labels else self.preprocess_labels(self.data['label'])
+            if vocab:
                 self.vocab = vocab
             elif os.path.exists(self.vocab_corpus_file):
                 print('reading corpus and processing vocab')
