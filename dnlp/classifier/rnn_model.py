@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import math
 import numpy as np
 import tensorflow as tf
 from tensorflow.contrib import rnn
@@ -72,9 +73,7 @@ class RNNModel():
             x = np.concatenate((x, np.array([x[-1]] * (self.args.batch_size - x_len))))
             return list(map(id2labels.get, self._predict(sess, x)[:len(text)]))
         else:
-            n_chunks = x_len / self.args.batch_size
-            if x_len % self.args.batch_size:
-                n_chunks += 1
+            n_chunks = math.ceil(len(x) / self.args.batch_size)
             data_list = np.array_split(x[:self.args.batch_size*n_chunks], n_chunks, axis=0)
             results = []
             for m in range(n_chunks):
@@ -170,9 +169,7 @@ class BIDIRNNModel():
             x = np.concatenate((x, np.array([x[-1]] * (self.args.batch_size - x_len))))
             return list(map(id2labels.get, self._predict(sess, x)[:len(text)]))
         else:
-            n_chunks = x_len / self.args.batch_size
-            if x_len % self.args.batch_size:
-                n_chunks += 1
+            n_chunks = math.ceil(len(x) / self.args.batch_size)
             data_list = np.array_split(x[:self.args.batch_size*n_chunks], n_chunks, axis=0)
             results = []
             for m in range(n_chunks):
