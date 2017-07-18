@@ -194,7 +194,7 @@ class RNNClassifier(object):
                                 dev_summary_writer.add_summary(dev_summaries, epoch * train_data_loader.num_batches + batch + 1) 
 
 
-    def predict(self, contents, batch_size=32):
+    def predict(self, contents, batch_size=64):
         if not self.model or not self.args or self.args.batch_size != batch_size or not self.vocab or not self.sess or not self.id2labels:
             self._load_model(batch_size=batch_size)
         x = [self._transform(i.strip()) for i in contents]
@@ -205,7 +205,7 @@ class RNNClassifier(object):
             results.extend(self.model.predict_label(self.sess, self.id2labels, x[m]))
         return results
 
-    def test(self, test_file=None, data=None, batch_size=32):
+    def test(self, test_file=None, data=None, batch_size=64):
         if not self.model or not self.args or self.args.batch_size != batch_size or not self.vocab or not self.sess or not self.id2labels or not self.labels:
             self._load_model(batch_size=batch_size)
         data_loader = TextLoader(model_dir=self.args.model_path, 
@@ -503,9 +503,9 @@ def rnn_classifier_train_test():
                         help='RNN, GRU or LSTM, default LSTM')
     parser.add_argument('--rnn_size', type=int, default=128,
                         help='size of RNN hidden state')
-    parser.add_argument('--num_layers', type=int, default=2,
+    parser.add_argument('--num_layers', type=int, default=4,
                         help='number of layers in RNN')
-    parser.add_argument('--batch_size', type=int, default=256,
+    parser.add_argument('--batch_size', type=int, default=64,
                         help='minibatch size')
     parser.add_argument('--seq_length', type=int, default=25,
                         help='RNN sequence length')
