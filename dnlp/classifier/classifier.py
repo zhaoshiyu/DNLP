@@ -516,7 +516,7 @@ def rnn_classifier_train_test():
                         help='minibatch size')
     parser.add_argument('--seq_length', type=int, default=20,
                         help='RNN sequence length')
-    parser.add_argument('--num_epochs', type=int, default=2,
+    parser.add_argument('--num_epochs', type=int, default=100,
                         help='number of epochs')
     parser.add_argument('--save_every', type=int, default=1000,
                         help='save frequency')
@@ -535,7 +535,7 @@ def rnn_classifier_train_test():
     # data = pd.read_csv('../../data/train.csv', encoding='utf-8')
     model_path = '../../data/test-model'
     rnn = RNNClassifier(model_path, args)
-    # rnn.train(data_file='../../data/train.csv', dev_data_file='../../data/test.csv', vocab_corpus_file='../../data/corpus.csv', args=args)
+    rnn.train(data_file='../../data/train.csv', dev_data_file='../../data/test.csv', vocab_corpus_file='../../data/corpus.csv', args=args)
     # print(rnn.predict(['英超-曼联3-1米堡升至第5 红魔迎来英超600胜']))
     print((rnn.test(test_file='../../data/test.csv', batch_size=32)))
 
