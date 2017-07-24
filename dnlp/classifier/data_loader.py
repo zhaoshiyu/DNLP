@@ -3,6 +3,8 @@
 import os
 import collections
 
+import jieba
+
 import pickle
 import numpy as np
 import pandas as pd
@@ -18,11 +20,13 @@ class TextLoader(object):
         seq_length=None, 
         vocab=None,
         labels=None,
+        segment=True,
         encoding='utf8'):
         self.data_file = data_file
         self.vocab_corpus_file = vocab_corpus_file
         self.batch_size = batch_size
         self.seq_length = seq_length
+        self.segment = segment
         self.encoding = encoding
         
         self.data = pd.read_csv(self.data_file, encoding=encoding) if self.data_file and os.path.exists(self.data_file) else data
@@ -46,7 +50,8 @@ class TextLoader(object):
                 print('processing vocab by data')
                 corpus = self.data['text'].values.tolist()
                 corpus.extend(self.data['label'].values.tolist())
-                corpus = ' '.join(corpus)
+                corpus = [word for line in corpus for word in jieba.cut(line)] if self.segment else ' '.join(corpus)
+                # corpus = ' '.join(corpus)
                 self.vocab = self.preprocess_vocab(corpus)
             
             assert self.vocab, 'vocab is null'
@@ -116,9 +121,14 @@ class TextLoader(object):
         if not os.path.exists(vocab_corpus_file):
             print('not vocab corpus file')
             exit(1)
+        corpus = []
         with open(vocab_corpus_file, 'r') as f:
-            corpus = f.readlines()
-            corpus = ' '.join([i.strip() for i in corpus])
+            if self.segment:
+                for line in f.readlines():
+                    corpus.extend([word for word in jieba.cut(line.strip())])
+            else:
+                corpus = f.readlines()
+                corpus = ' '.join([i.strip() for i in corpus])
             # corpus = corpus.decode('utf8')
         return self.preprocess_vocab(corpus)
     
@@ -128,6 +138,7 @@ class TextLoader(object):
         return np.c_[tensor_x, tensor_y].astype(int)
 
     def transform(self, text):
+        vector_ids = map(self.vocab.get, jieba.cut(text.strip())) if self.segment else map(self.vocab.get, text.strip())
         vector_ids = map(self.vocab.get, text)
         vector_ids = list(map(lambda i: i if i else 0, vector_ids))
         if len(vector_ids) >= self.seq_length:
@@ -160,11 +171,11 @@ class TextLoader(object):
 
 if __name__ == '__main__':
     print('111')
-    data_loader = TextLoader(model_dir='../../data/test-model', data_file='../../data/input.csv', vocab_corpus_file='../../data/corpus.txt', data=None, batch_size=32, seq_length=30)
+    data_loader = TextLoader(model_dir='../../data/test-model', data_file='../../data/train.csv', vocab_corpus_file='../../data/corpus.csv', data=None, batch_size=32, seq_length=30)
     print(data_loader.vocab)
-    import pdb; pdb.set_trace()
-    data_loader.reset_batch_pointer()
-    for batch in range(data_loader.num_batches):
-        x, y = data_loader.next_batch()
-        print(x)
-        print(y)
+    # import pdb; pdb.set_trace()
+    # data_loader.reset_batch_pointer()
+    # for batch in range(data_loader.num_batches):
+    #     x, y = data_loader.next_batch()
+    #     print(x)
+    #     print(y)
