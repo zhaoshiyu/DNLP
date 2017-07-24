@@ -141,10 +141,8 @@ class TextLoader(object):
         vector_ids = map(self.vocab.get, jieba.cut(text.strip())) if self.segment else map(self.vocab.get, text.strip())
         vector_ids = map(self.vocab.get, text)
         vector_ids = list(map(lambda i: i if i else 0, vector_ids))
-        if len(vector_ids) >= self.seq_length:
-            vector_ids = vector_ids[:self.seq_length]
-        else:
-            vector_ids = vector_ids + [0] * (self.seq_length - len(vector_ids))
+        ids_len = len(vector_ids)
+        vector_ids = vector_ids[:self.seq_length] if ids_len >= self.seq_length else vector_ids + [0] * (self.seq_length - ids_len)
         return vector_ids
 
     def create_batches(self):
