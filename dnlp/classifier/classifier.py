@@ -7,6 +7,8 @@ import math
 import argparse
 import pickle
 
+import jieba
+
 import numpy as np
 import tensorflow as tf
 
@@ -55,22 +57,21 @@ class RNNClassifier(object):
     def _init_model(self):
         # if not self.model:
         try:
-            with tf.variable_scope("classifier"):
+            with tf.variable_scope('classifier'):
                 self.model = RNNModel(self.args)
                 # self.model = BIDIRNNModel(self.args)
         except ValueError as ve:
-            with tf.variable_scope("classifier", reuse=True):
+            with tf.variable_scope('classifier', reuse=True):
                 self.model = RNNModel(self.args)
                 # self.model = BIDIRNNModel(self.args)
 
     def _transform(self, text):
         text = text if type('') == type(text) else text.decode('utf-8')
+        text = [word for word in jieba.cut(text)] if self.args.segment else text
         x = list(map(self.vocab.get, text))
         x = [i if i else 0 for i in x]
-        if len(x) >= self.args.seq_length:
-            x = x[:self.args.seq_length]
-        else:
-            x = x + [0] * (self.args.seq_length - len(x))
+        x_len = len(x)
+        x = x[:self.args.seq_length] if x_len >= self.args.seq_length else x + [0] * (self.args.seq_length - x_len)
         return x
 
     def load(self):
@@ -94,7 +95,8 @@ class RNNClassifier(object):
                                        batch_size=self.args.batch_size, 
                                        seq_length=self.args.seq_length,
                                        vocab=self.vocab,
-                                       labels=self.labels)
+                                       labels=self.labels,
+                                       segment=self.args.segment)
         
         if dev_data_file:
             if self.vocab and self.labels:
@@ -108,7 +110,8 @@ class RNNClassifier(object):
                                         batch_size=self.args.batch_size, 
                                         seq_length=self.args.seq_length,
                                         vocab=vocab,
-                                        labels=labels)
+                                        labels=labels,
+                                        segment=self.args.segment)
 
         if not self.args.vocab_size and not self.args.label_size:
             self.args.vocab_size = train_data_loader.vocab_size
@@ -142,18 +145,18 @@ class RNNClassifier(object):
         
         with tf.Graph().as_default():
             # Summaries for loss and accuracy
-            loss_summary = tf.summary.scalar("loss", self.model.loss)
-            acc_summary = tf.summary.scalar("accuracy", self.model.accuracy)
+            loss_summary = tf.summary.scalar('loss', self.model.loss)
+            acc_summary = tf.summary.scalar('accuracy', self.model.accuracy)
 
             # Train Summaries
             train_summary_op = tf.summary.merge([loss_summary, acc_summary])
-            train_summary_dir = os.path.join(self.model_path, "summaries", "train")
+            train_summary_dir = os.path.join(self.model_path, 'summaries', 'train')
             train_summary_writer = tf.summary.FileWriter(train_summary_dir, self.sess.graph)
 
             if dev_data_loader:
                 # Dev summaries
                 dev_summary_op = tf.summary.merge([loss_summary, acc_summary])
-                dev_summary_dir = os.path.join(self.model_path, "summaries", "dev")
+                dev_summary_dir = os.path.join(self.model_path, 'summaries', 'dev')
                 dev_summary_writer = tf.summary.FileWriter(dev_summary_dir, self.sess.graph)
                 dev_batch_count = 0
 
@@ -213,7 +216,8 @@ class RNNClassifier(object):
                                  batch_size=self.args.batch_size, 
                                  seq_length=self.args.seq_length,
                                  vocab=self.vocab,
-                                 labels=self.labels)
+                                 labels=self.labels,
+                                 segment=self.args.segment)
         data = data_loader.tensor.copy()
         n_chunks = math.ceil(len(data) / self.args.batch_size)
         data_list = np.array_split(data[:self.args.batch_size*n_chunks], n_chunks, axis=0)
@@ -278,30 +282,31 @@ class CNNClassifier(object):
     def _init_model(self):
         # if not self.model:
         try:
-            with tf.variable_scope("classifier"):
+            with tf.variable_scope('classifier'):
                 self.model = CNNModel(
                                 seq_length=self.args.seq_length,
                                 label_size=self.args.label_size,
                                 vocab_size=self.args.vocab_size,
                                 embedding_size=self.args.embedding_dim,
-                                filter_sizes=list(map(int, self.args.filter_sizes.split(","))),
+                                filter_sizes=list(map(int, self.args.filter_sizes.split(','))),
                                 num_filters=self.args.num_filters,
                                 l2_reg_lambda=self.args.l2_reg_lambda)
                 # self.model = BIDIRNNModel(self.args)
         except ValueError as ve:
-            with tf.variable_scope("classifier", reuse=True):
+            with tf.variable_scope('classifier', reuse=True):
                 self.model = CNNModel(
                                 seq_length=seq_length,
                                 label_size=self.args.label_size,
                                 vocab_size=self.args.vocab_size,
                                 embedding_size=self.args.embedding_dim,
-                                filter_sizes=list(map(int, self.args.filter_sizes.split(","))),
+                                filter_sizes=list(map(int, self.args.filter_sizes.split(','))),
                                 num_filters=self.args.num_filters,
                                 l2_reg_lambda=self.args.l2_reg_lambda)
                 # self.model = BIDIRNNModel(self.args)
 
     def _transform(self, text):
         text = text if type('') == type(text) else text.decode('utf-8')
+        import pdb; pdb.set_trace()
         x = list(map(self.vocab.get, text))
         x = [i if i else 0 for i in x]
         if len(x) >= self.args.seq_length:
@@ -317,7 +322,8 @@ class CNNClassifier(object):
                                        batch_size=self.args.batch_size, 
                                        seq_length=self.args.seq_length,
                                        vocab=self.vocab,
-                                       labels=self.labels)
+                                       labels=self.labels,
+                                       segment=self.args.segment)
         
         if dev_data_file:
             if self.vocab and self.labels:
@@ -331,13 +337,14 @@ class CNNClassifier(object):
                                         batch_size=self.args.batch_size, 
                                         seq_length=self.args.seq_length,
                                         vocab=vocab,
-                                        labels=labels)
+                                        labels=labels,
+                                        segment=self.args.segment)
 
         if not self.args.vocab_size and not self.args.label_size:
             self.args.vocab_size = train_data_loader.vocab_size
             self.args.label_size = train_data_loader.label_size
         
-        global_step = tf.Variable(0, name="global_step", trainable=False)
+        global_step = tf.Variable(0, name='global_step', trainable=False)
         self._init_model()
         init = tf.global_variables_initializer()
         self.sess.run(init)
@@ -366,7 +373,7 @@ class CNNClassifier(object):
 
         with tf.Graph().as_default():
             # # Define Training procedure
-            # global_step = tf.Variable(0, name="global_step", trainable=False)
+            # global_step = tf.Variable(0, name='global_step', trainable=False)
             # optimizer = tf.train.AdamOptimizer(1e-3)
             # # import pdb; pdb.set_trace()
             # grads_and_vars = optimizer.compute_gradients(self.model.loss)
@@ -376,42 +383,42 @@ class CNNClassifier(object):
             # grad_summaries = []
             # for g, v in grads_and_vars:
             #     if g:
-            #         grad_hist_summary = tf.summary.histogram("{}/grad/hist".format(v.name), g)
-            #         sparsity_summary = tf.summary.scalar("{}/grad/sparsity".format(v.name), tf.nn.zero_fraction(g))
+            #         grad_hist_summary = tf.summary.histogram('{}/grad/hist'.format(v.name), g)
+            #         sparsity_summary = tf.summary.scalar('{}/grad/sparsity'.format(v.name), tf.nn.zero_fraction(g))
             #         grad_summaries.append(grad_hist_summary)
             #         grad_summaries.append(sparsity_summary)
             # grad_summaries_merged = tf.summary.merge(grad_summaries)
 
             # Output directory for models and summaries
             timestamp = str(int(time.time()))
-            out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", timestamp))
-            print("Writing to {}\n".format(out_dir))
+            out_dir = os.path.abspath(os.path.join(os.path.curdir, 'runs', timestamp))
+            print('Writing to {}\n'.format(out_dir))
 
             # Summaries for loss and accuracy
-            loss_summary = tf.summary.scalar("loss", self.model.loss)
-            acc_summary = tf.summary.scalar("accuracy", self.model.accuracy)
+            loss_summary = tf.summary.scalar('loss', self.model.loss)
+            acc_summary = tf.summary.scalar('accuracy', self.model.accuracy)
 
             # Train Summaries
             # train_summary_op = tf.summary.merge([loss_summary, acc_summary, grad_summaries_merged])
             train_summary_op = tf.summary.merge([loss_summary, acc_summary])
-            train_summary_dir = os.path.join(out_dir, "summaries", "train")
+            train_summary_dir = os.path.join(out_dir, 'summaries', 'train')
             train_summary_writer = tf.summary.FileWriter(train_summary_dir, self.sess.graph)
 
             # Dev summaries
             dev_summary_op = tf.summary.merge([loss_summary, acc_summary])
-            dev_summary_dir = os.path.join(out_dir, "summaries", "dev")
+            dev_summary_dir = os.path.join(out_dir, 'summaries', 'dev')
             dev_summary_writer = tf.summary.FileWriter(dev_summary_dir, self.sess.graph)
 
             # Checkpoint directory. Tensorflow assumes this directory already exists so we need to create it
-            checkpoint_dir = os.path.abspath(os.path.join(out_dir, "checkpoints"))
-            checkpoint_prefix = os.path.join(checkpoint_dir, "model")
+            checkpoint_dir = os.path.abspath(os.path.join(out_dir, 'checkpoints'))
+            checkpoint_prefix = os.path.join(checkpoint_dir, 'model')
             if not os.path.exists(checkpoint_dir):
                 os.makedirs(checkpoint_dir)
             # saver = tf.train.Saver(tf.global_variables(), max_to_keep=self.args.num_checkpoints)
             # saver = tf.train.Saver(self.sess, max_to_keep=self.args.num_checkpoints)
 
             # Write vocabulary
-            # vocab_processor.save(os.path.join(out_dir, "vocab"))
+            # vocab_processor.save(os.path.join(out_dir, 'vocab'))
 
             # Initialize all variables
             # self.sess.run(tf.global_variables_initializer())
@@ -432,8 +439,8 @@ class CNNClassifier(object):
                 step, summaries, loss, accuracy = self.sess.run(
                     [global_step, train_summary_op, self.model.loss, self.model.accuracy],
                     feed_dict)
-                # print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
-                print("step {}, loss {:g}, acc {:g}".format(step, loss, accuracy))
+                # print('{}: step {}, loss {:g}, acc {:g}'.format(time_str, step, loss, accuracy))
+                print('step {}, loss {:g}, acc {:g}'.format(step, loss, accuracy))
                 train_summary_writer.add_summary(summaries, step)
 
             def dev_step(x_batch, y_batch, step, writer=None):
@@ -450,8 +457,8 @@ class CNNClassifier(object):
                     [dev_summary_op, self.model.loss, self.model.accuracy],
                     feed_dict)
                 # time_str = datetime.datetime.now().isoformat()
-                # print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
-                print("step {}, loss {:g}, acc {:g}".format(step, loss, accuracy))
+                # print('{}: step {}, loss {:g}, acc {:g}'.format(time_str, step, loss, accuracy))
+                print('step {}, loss {:g}, acc {:g}'.format(step, loss, accuracy))
                 if writer:
                     writer.add_summary(summaries, step)
 
@@ -463,13 +470,13 @@ class CNNClassifier(object):
                 train_step(x_batch, y_batch, step)
                 current_step = tf.train.global_step(self.sess, global_step)
                 if current_step % self.args.evaluate_every == 0:
-                    print("\nEvaluation:")
+                    print('\nEvaluation:')
                     # dev_step(x_dev, y_dev, writer=dev_summary_writer)
                     dev_step(x_batch, y_batch, step, writer=dev_summary_writer)
-                    print("")
+                    print('')
                 if current_step % self.args.checkpoint_every == 0:
                     path = saver.save(self.sess, checkpoint_prefix, global_step=current_step)
-                    print("Saved model checkpoint to {}\n".format(path))
+                    print('Saved model checkpoint to {}\n'.format(path))
 
 
 
@@ -507,9 +514,9 @@ def rnn_classifier_train_test():
                         help='number of layers in RNN')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='minibatch size')
-    parser.add_argument('--seq_length', type=int, default=25,
+    parser.add_argument('--seq_length', type=int, default=20,
                         help='RNN sequence length')
-    parser.add_argument('--num_epochs', type=int, default=150,
+    parser.add_argument('--num_epochs', type=int, default=2,
                         help='number of epochs')
     parser.add_argument('--save_every', type=int, default=1000,
                         help='save frequency')
@@ -521,13 +528,15 @@ def rnn_classifier_train_test():
                         help='dropout keep probability')
     parser.add_argument('--state_is_tuple', type=bool, default=True,
                         help='state_is_tuple')
+    parser.add_argument('--segment', type=bool, default=True,
+                        help='text segmentation')
     args = parser.parse_args()
     
     # data = pd.read_csv('../../data/train.csv', encoding='utf-8')
     model_path = '../../data/test-model'
     rnn = RNNClassifier(model_path, args)
     # rnn.train(data_file='../../data/train.csv', dev_data_file='../../data/test.csv', vocab_corpus_file='../../data/corpus.csv', args=args)
-    print(rnn.predict(['英超-曼联3-1米堡升至第5 红魔迎来英超600胜']))
+    # print(rnn.predict(['英超-曼联3-1米堡升至第5 红魔迎来英超600胜']))
     print((rnn.test(test_file='../../data/test.csv', batch_size=32)))
 
 
@@ -582,6 +591,8 @@ def cnn_classifier_train_test():
                         help='Log placement of ops on devices')
     parser.add_argument('--label_size', type=int, default=4,
                         help='Classes number')
+    parser.add_argument('--segment', type=bool, default=True,
+                        help='text segmentation')
 
     # parser = argparse.ArgumentParser()
     # parser.add_argument('--model_path', type=str, default= model_path,
@@ -618,5 +629,5 @@ def cnn_classifier_train_test():
     print((cnn.test(test_file='../../data/test.csv', batch_size=32)))
 
 if __name__ == '__main__':
-    # rnn_classifier_train_test()
-    cnn_classifier_train_test()
+    rnn_classifier_train_test()
+    # cnn_classifier_train_test()
