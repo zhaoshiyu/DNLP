@@ -306,13 +306,11 @@ class CNNClassifier(object):
 
     def _transform(self, text):
         text = text if type('') == type(text) else text.decode('utf-8')
-        import pdb; pdb.set_trace()
+        text = [word for word in jieba.cut(text)] if self.args.segment else text
         x = list(map(self.vocab.get, text))
         x = [i if i else 0 for i in x]
-        if len(x) >= self.args.seq_length:
-            x = x[:self.args.seq_length]
-        else:
-            x = x + [0] * (self.args.seq_length - len(x))
+        x_len = len(x)
+        x = x[:self.args.seq_length] if x_len >= self.args.seq_length else x + [0] * (self.args.seq_length - x_len)
         return x
 
     def train(self, data_file=None, data=None, dev_data_file=None, vocab_corpus_file=None, args=None, continued=False):
@@ -436,8 +434,11 @@ class CNNClassifier(object):
                 # _, step, summaries, loss, accuracy = self.sess.run(
                 #     [train_op, global_step, train_summary_op, self.model.loss, self.model.accuracy],
                 #     feed_dict)
-                step, summaries, loss, accuracy = self.sess.run(
-                    [global_step, train_summary_op, self.model.loss, self.model.accuracy],
+                # step, summaries, loss, accuracy = self.sess.run(
+                #     [global_step, train_summary_op, self.model.loss, self.model.accuracy],
+                #     feed_dict)
+                summaries, loss, accuracy = self.sess.run(
+                    [train_summary_op, self.model.loss, self.model.accuracy],
                     feed_dict)
                 # print('{}: step {}, loss {:g}, acc {:g}'.format(time_str, step, loss, accuracy))
                 print('step {}, loss {:g}, acc {:g}'.format(step, loss, accuracy))
@@ -462,10 +463,12 @@ class CNNClassifier(object):
                 if writer:
                     writer.add_summary(summaries, step)
 
+            step = 0
             # Generate batches
             train_data_loader.reset_batch_pointer()
             # Training loop. For each batch...
             for batch in range(train_data_loader.num_batches):
+                step += 1
                 x_batch, y_batch = train_data_loader.next_batch()
                 train_step(x_batch, y_batch, step)
                 current_step = tf.train.global_step(self.sess, global_step)
@@ -516,7 +519,7 @@ def rnn_classifier_train_test():
                         help='minibatch size')
     parser.add_argument('--seq_length', type=int, default=20,
                         help='RNN sequence length')
-    parser.add_argument('--num_epochs', type=int, default=100,
+    parser.add_argument('--num_epochs', type=int, default=1,
                         help='number of epochs')
     parser.add_argument('--save_every', type=int, default=1000,
                         help='save frequency')
@@ -536,8 +539,8 @@ def rnn_classifier_train_test():
     model_path = '../../data/test-model'
     rnn = RNNClassifier(model_path, args)
     rnn.train(data_file='../../data/train.csv', dev_data_file='../../data/test.csv', vocab_corpus_file='../../data/corpus.csv', args=args)
-    # print(rnn.predict(['英超-曼联3-1米堡升至第5 红魔迎来英超600胜']))
-    print((rnn.test(test_file='../../data/test.csv', batch_size=32)))
+    print(rnn.predict(['英超-曼联3-1米堡升至第5 红魔迎来英超600胜']))
+    # print((rnn.test(test_file='../../data/test.csv', batch_size=64)))
 
 
 def cnn_classifier_train_test():
@@ -629,5 +632,5 @@ def cnn_classifier_train_test():
     print((cnn.test(test_file='../../data/test.csv', batch_size=32)))
 
 if __name__ == '__main__':
-    rnn_classifier_train_test()
-    # cnn_classifier_train_test()
+    # rnn_classifier_train_test()
+    cnn_classifier_train_test()
