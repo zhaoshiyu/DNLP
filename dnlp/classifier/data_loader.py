@@ -30,11 +30,7 @@ class TextLoader(object):
         self.encoding = encoding
         
         self.data = pd.read_csv(self.data_file, encoding=encoding) if self.data_file and os.path.exists(self.data_file) else data
-        # if self.data_file and os.path.exists(self.data_file):
-        #     self.data = pd.read_csv(self.data_file, encoding=encoding)
-        # else:
-        #     print('data file not exists, please specify training file ')
-        #     exit(1)
+        
         if self.data is None:
             print('data is null, please specify training file ')
             exit(1)
