@@ -139,7 +139,7 @@ class TextLoader(object):
 
     def transform(self, text):
         vector_ids = map(self.vocab.get, jieba.cut(text.strip())) if self.segment else map(self.vocab.get, text.strip())
-        vector_ids = map(self.vocab.get, text)
+        # vector_ids = map(self.vocab.get, [word for word in jieba.cut(text.strip())][:self.seq_length]) if self.segment else map(self.vocab.get, text.strip()[:self.seq_length])
         vector_ids = list(map(lambda i: i if i else 0, vector_ids))
         ids_len = len(vector_ids)
         vector_ids = vector_ids[:self.seq_length] if ids_len >= self.seq_length else vector_ids + [0] * (self.seq_length - ids_len)
