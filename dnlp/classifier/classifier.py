@@ -632,5 +632,5 @@ def cnn_classifier_train_test():
     print((cnn.test(test_file='../../data/test.csv', batch_size=32)))
 
 if __name__ == '__main__':
-    # rnn_classifier_train_test()
-    cnn_classifier_train_test()
+    rnn_classifier_train_test()
+    # cnn_classifier_train_test()
