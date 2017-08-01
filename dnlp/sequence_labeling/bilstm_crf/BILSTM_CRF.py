@@ -26,16 +26,6 @@ class BILSTM_CRF(object):
         self.targets_weight = tf.placeholder(tf.float32, [None, self.num_steps])
         self.targets_transition = tf.placeholder(tf.int32, [None])
 
-        # char embedding
-        if embedding_matrix != None:
-            self.embedding = tf.Variable(embedding_matrix, trainable=False, name="emb", dtype=tf.float32)
-        else:
-            self.embedding = tf.get_variable("emb", [self.num_chars, self.emb_dim])
-        self.inputs_emb = tf.nn.embedding_lookup(self.embedding, self.inputs)
-        self.inputs_emb = tf.transpose(self.inputs_emb, [1, 0, 2])
-        self.inputs_emb = tf.reshape(self.inputs_emb, [-1, self.emb_dim])
-        self.inputs_emb = tf.split(self.inputs_emb, self.num_steps, 0)
-
         # lstm cell
         lstm_cell_fw = rnn.BasicLSTMCell(self.hidden_dim)
         lstm_cell_bw = rnn.BasicLSTMCell(self.hidden_dim)
@@ -52,6 +42,24 @@ class BILSTM_CRF(object):
         self.length = tf.reduce_sum(tf.sign(self.inputs), reduction_indices=1)
         self.length = tf.cast(self.length, tf.int32)
 
+        # char embedding
+        with tf.variable_scope('embeddingLayer'):
+            with tf.device('/cpu:0'):
+                embedding = tf.Variable(embedding_matrix, trainable=False, name="embedding", dtype=tf.float32) if embedding_matrix else tf.get_variable("emb", [self.num_chars, self.emb_dim])
+                inputs_emb = tf.nn.embedding_lookup(embedding, self.inputs)
+                inputs_emb = tf.transpose(inputs_emb, [1, 0, 2])
+                inputs_emb = tf.reshape(inputs_emb, [-1, self.emb_dim])
+                self.inputs_emb = tf.split(inputs_emb, self.num_steps, 0)
+                
+        # if embedding_matrix != None:
+        #     self.embedding = tf.Variable(embedding_matrix, trainable=False, name="emb", dtype=tf.float32)
+        # else:
+        #     self.embedding = tf.get_variable("emb", [self.num_chars, self.emb_dim])
+        # self.inputs_emb = tf.nn.embedding_lookup(self.embedding, self.inputs)
+        # self.inputs_emb = tf.transpose(self.inputs_emb, [1, 0, 2])
+        # self.inputs_emb = tf.reshape(self.inputs_emb, [-1, self.emb_dim])
+        # self.inputs_emb = tf.split(self.inputs_emb, self.num_steps, 0)
+
         # forward and backward
         self.outputs, _, _ = rnn.static_bidirectional_rnn(
             lstm_cell_fw,
@@ -62,10 +70,11 @@ class BILSTM_CRF(object):
         )
 
         # softmax
-        self.outputs = tf.reshape(tf.concat(self.outputs, 1), [-1, self.hidden_dim * 2])
-        self.softmax_w = tf.get_variable("softmax_w", [self.hidden_dim * 2, self.num_classes])
-        self.softmax_b = tf.get_variable("softmax_b", [self.num_classes])
-        self.logits = tf.matmul(self.outputs, self.softmax_w) + self.softmax_b
+        with tf.variable_scope('softmaxLayer'):
+            self.outputs = tf.reshape(tf.concat(self.outputs, 1), [-1, self.hidden_dim * 2])
+            self.softmax_w = tf.get_variable("softmax_w", [self.hidden_dim * 2, self.num_classes])
+            self.softmax_b = tf.get_variable("softmax_b", [self.num_classes])
+            self.logits = tf.matmul(self.outputs, self.softmax_w) + self.softmax_b
 
         if not is_crf:
             pass
