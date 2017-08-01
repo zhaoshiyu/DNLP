@@ -50,15 +50,6 @@ class BILSTM_CRF(object):
                 inputs_emb = tf.transpose(inputs_emb, [1, 0, 2])
                 inputs_emb = tf.reshape(inputs_emb, [-1, self.emb_dim])
                 self.inputs_emb = tf.split(inputs_emb, self.num_steps, 0)
-                
-        # if embedding_matrix != None:
-        #     self.embedding = tf.Variable(embedding_matrix, trainable=False, name="emb", dtype=tf.float32)
-        # else:
-        #     self.embedding = tf.get_variable("emb", [self.num_chars, self.emb_dim])
-        # self.inputs_emb = tf.nn.embedding_lookup(self.embedding, self.inputs)
-        # self.inputs_emb = tf.transpose(self.inputs_emb, [1, 0, 2])
-        # self.inputs_emb = tf.reshape(self.inputs_emb, [-1, self.emb_dim])
-        # self.inputs_emb = tf.split(self.inputs_emb, self.num_steps, 0)
 
         # forward and backward
         self.outputs, _, _ = rnn.static_bidirectional_rnn(
