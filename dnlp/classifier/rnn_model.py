@@ -36,7 +36,8 @@ class RNNModel():
                 inputs = tf.split(embedded, self.args.seq_length, 1)
                 inputs = [tf.squeeze(input_, [1]) for input_ in inputs]
         
-        outputs, last_state = rnn.static_rnn(cell, inputs, self.initial_state, scope='rnnLayer')
+        with tf.variable_scope('RNNLayer'):
+            outputs, last_state = rnn.static_rnn(cell, inputs, self.initial_state, scope='rnnLayer')
 
         with tf.variable_scope('softmaxLayer'):
             softmax_w = tf.get_variable('w', [self.args.rnn_size, self.args.label_size])
@@ -127,10 +128,11 @@ class BIDIRNNModel():
         
         used = tf.sign(tf.reduce_max(tf.abs(inputs), reduction_indices=2))
         self.length = tf.cast(tf.reduce_sum(used, reduction_indices=0), tf.int32)
-        outputs, last_state_fw, last_state_bw = rnn.static_bidirectional_rnn(fw_cell, bw_cell,
-                                               inputs, initial_state_fw = self.initial_state_fw,
-                                               initial_state_bw = self.initial_state_bw,
-                                               dtype=tf.float32, sequence_length=self.length)
+        with tf.variable_scope('RNNLayer'):
+            outputs, last_state_fw, last_state_bw = rnn.static_bidirectional_rnn(fw_cell, bw_cell,
+                                                inputs, initial_state_fw = self.initial_state_fw,
+                                                initial_state_bw = self.initial_state_bw,
+                                                dtype=tf.float32, sequence_length=self.length)
 
         with tf.variable_scope('softmaxLayer'):
             softmax_w = tf.get_variable('w', [self.args.rnn_size*2, self.args.label_size])
