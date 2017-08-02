@@ -52,11 +52,12 @@ class BILSTM_CRF(object):
                 self.inputs_emb = tf.split(inputs_emb, self.num_steps, 0)
 
         # forward and backward
-        self.outputs, _, _ = rnn.static_bidirectional_rnn(lstm_cell_fw,
-                                                          lstm_cell_bw,
-                                                          self.inputs_emb,
-                                                          dtype=tf.float32,
-                                                          sequence_length=self.length)
+        with tf.variable_scope('RNNLayer'):
+            self.outputs, _, _ = rnn.static_bidirectional_rnn(lstm_cell_fw,
+                                                              lstm_cell_bw,
+                                                              self.inputs_emb,
+                                                              dtype=tf.float32,
+                                                              sequence_length=self.length)
 
         # softmax
         with tf.variable_scope('softmaxLayer'):
