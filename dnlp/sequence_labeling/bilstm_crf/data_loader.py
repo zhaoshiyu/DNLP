@@ -1,4 +1,5 @@
-#encoding:utf-8
+# -*- coding: utf-8 -*-
+
 import re
 import os
 import csv
@@ -110,7 +111,7 @@ def loadMap(token2id_filepath):
 	id2token = {}
 	with open(token2id_filepath) as infile:
 		for row in infile:
-			row = row.rstrip().decode("utf-8")
+			row = row.strip()
 			token = row.split('\t')[0]
 			token_id = int(row.split('\t')[1])
 			token2id[token] = token_id
@@ -118,15 +119,15 @@ def loadMap(token2id_filepath):
 	return token2id, id2token
 
 def saveMap(id2char, id2label):
-	with open("char2id", "wb") as outfile:
+	with open("char2id", "w") as outfile:
 		for idx in id2char:
 			outfile.write(id2char[idx] + "\t" + str(idx)  + "\n")
-	with open("label2id", "wb") as outfile:
+	with open("label2id", "w") as outfile:
 		for idx in id2label:
 			outfile.write(id2label[idx] + "\t" + str(idx) + "\n")
 	print("saved map between token and id")
 
-def buildMap(train_path="train.in"):
+def buildMap(train_path="train.csv"):
 	df_train = pd.read_csv(train_path, delimiter='\t', quoting=csv.QUOTE_NONE, skip_blank_lines=False, header=None, names=["char", "label"])
 	chars = list(set(df_train["char"][df_train["char"].notnull()]))
 	labels = list(set(df_train["label"][df_train["label"].notnull()]))
@@ -187,10 +188,10 @@ def getTest(test_path="test.in", is_validation=False, seq_max_len=200):
 	def mapFunc(x, char2id):
 		if str(x) == str(np.nan):
 			return -1
-		elif x.decode("utf-8") not in char2id:
+		elif x not in char2id:
 			return char2id["<NEW>"]
 		else:
-			return char2id[x.decode("utf-8")]
+			return char2id[x]
 
 	df_test["char_id"] = df_test.char.map(lambda x:mapFunc(x, char2id))
 	df_test["label_id"] = df_test.label.map(lambda x : -1 if str(x) == str(np.nan) else label2id[x])
