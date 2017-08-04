@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import math
 import data_loader
 import numpy as np
